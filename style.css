@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
+
+:root {
+    --primary-grad: linear-gradient(135deg, #6366f1, #2563eb);
+    --primary-color: #2563eb;
+    --bg-dark: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --white: #ffffff;
+    --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-dark);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 0;
+    color: var(--text-main);
+    overflow-x: hidden;
+    position: relative;
+}
+
+.math-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    overflow: hidden;
+}
+
+.math-bg::after {
+    content: 'π ∑ ∫ ∞ √ Δ Ω θ μ λ φ σ π ∑ ∫ ∞ √ Δ Ω θ μ λ φ σ π ∑ ∫ ∞ √ Δ Ω θ μ λ φ σ';
+    position: absolute;
+    font-family: 'Times New Roman', serif;
+    font-size: 4rem;
+    color: rgba(99, 102, 241, 0.15);
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    line-height: 2;
+    text-align: center;
+    word-wrap: break-word;
+    animation: floatSymbols 60s linear infinite;
+    pointer-events: none;
+    user-select: none;
+}
+
+@keyframes floatSymbols {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.contenedor {
+    width: 96%;
+    max-width: 1200px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 30px;
+    box-shadow: var(--shadow-premium);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    animation: fadeInContainer 0.8s ease-out;
+    position: relative;
+    z-index: 1;
+    /* ETAPA 2B: Flexbox para alinear Sidebar y Pizarrón */
+    display: flex;
+    gap: 25px;
+    align-items: stretch;
+}
+
+/* ETAPA 2B: Barra Lateral */
+.sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    /* Scroll interno por si la pantalla es baja */
+    overflow-y: auto;
+    max-height: 85vh;
+    padding-right: 10px;
+}
+
+/* ETAPA 2B: Pizarrón */
+.pizarron {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    /* Scroll interno para el contenido principal */
+    overflow-y: auto;
+    max-height: 85vh;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+    /* Transición suave para el padding del teclado */
+    transition: padding-bottom 0.3s;
+}
+
+/* Ajustes de tipografía para la barra lateral */
+.sidebar h1 {
+    font-size: 32px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+.sidebar .subtitulo { font-size: 13px; margin-bottom: 25px; }
+
+/* Contenedor de los botones */
+.menu-categoria { 
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 25px; 
+}
+
+.menu-categoria h3 { 
+    color: var(--primary-color); font-family: 'Poppins', sans-serif;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .1em; 
+    border-bottom: 1px solid #dbeafe; padding-bottom: 5px; 
+    margin-bottom: 8px;
+}
+
+/* Diseño del botón chico (Reemplaza a la tarjeta grande) */
+.card-modulo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 12px;
+}
+
+/* Efecto Hover */
+.card-modulo:hover { 
+    transform: translateX(5px);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+/* Estilo para la herramienta seleccionada */
+.card-modulo.card-activa {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.card-modulo:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.card-icono {
+    font-size: 20px;
+    display: block;
+}
+
+/* Título compacto */
+.card-titulo {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    /* Evita heredar colores al estar activa */
+    color: inherit;
+}
+
+.resultado {
+    border-radius: 20px;
+    color: var(--text-main);
+}
+
+.teclado-math { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; justify-content: center; }
+.teclado-math button {
+    padding: 10px 15px;
+    background: white;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.teclado-math button:hover { background: #eff6ff; border-color: var(--primary-color); color: var(--primary-color); }
+
+.chat-container { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; text-align: left; }
+.message-row { display: flex; align-items: flex-start; gap: 12px; animation: messageSlide 0.4s ease-out forwards; }
+.avatar-nioo {
+    width: 45px;
+    height: 45px;
+    background: var(--primary-grad);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+    border: 2px solid white;
+}
+.bubble {
+    background: white;
+    color: var(--text-main);
+    padding: 14px 18px;
+    border-radius: 18px 18px 18px 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    max-width: 80%;
+    line-height: 1.6;
+}
+.formula-bubble {
+    background: #f0f7ff;
+    font-family: 'Consolas', monospace;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 12px;
+    color: #1e3a8a;
+}
+
+@keyframes messageSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeInContainer { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2e8f0; border-radius: 12px; background: rgba(255,255,255,0.9); }
+.label-campo { display: block; margin: 12px 0 4px; text-align: left; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.resultado button { padding: 14px 24px; margin: 15px 5px; border: 0; border-radius: 12px; background: var(--primary-grad); color: white; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+.resultado button:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+#lista-historial li { background: white; padding: 12px 15px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; border-left: 5px solid var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+
+@media (max-width: 768px) {
+    /* Layout vertical en celular */
+    .contenedor { 
+        flex-direction: column; 
+        padding: 10px; 
+        width: 100%; 
+        border-radius: 0;
+    }
+    
+    /* La barra lateral se vuelve una cabecera pegajosa arriba */
+    .sidebar {
+        width: 100%;
+        max-height: none;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        padding: 15px 10px;
+        border-radius: 15px;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+    }
+
+    .sidebar h1 { font-size: 24px; text-align: center; }
+    .sidebar .subtitulo { display: none; } /* Ocultamos subtítulo para ahorrar espacio */
+
+    /* El menú pasa a ser una franja horizontal deslizable */
+    .menu {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        gap: 8px;
+        padding-bottom: 5px;
+        /* Ocultar barra de scroll en navegadores Webkit */
+        -webkit-overflow-scrolling: touch;
+    }
+    .menu::-webkit-scrollbar { display: none; }
+    
+    .menu-categoria {
+        display: flex;
+        flex-direction: row;
+        margin: 0;
+        gap: 8px;
+    }
+    .menu-categoria h3 { display: none; } /* Ocultamos títulos de categoría */
+
+    .card-modulo { padding: 8px 15px; }
+
+    /* El pizarrón pierde su scroll interno, usa el scroll de la página */
+    .pizarron {
+        overflow-y: visible;
+        max-height: none;
+        padding: 15px;
+    }
+}
+
+/* ==========================================================================
+   ESTILOS DEL PANEL DE TECLADO GLOBAL
+   ========================================================================== */
+
+/* Contenedor principal del teclado fijo en la base */
+.panel-teclado {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(248, 250, 252, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid #cbd5e1;
+    box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 15px 20px 25px;
+}
+
+/* Clase dinámica para empujar el teclado fuera de la pantalla (cerrado) */
+.teclado-oculto {
+    transform: translateY(100%);
+}
+
+/* Cabecera del teclado con las pestañas y botón cerrar */
+.teclado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Contenedor de las pestañas */
+.teclado-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+/* Botón de cada pestaña */
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Diseño de la pestaña cuando está activa/seleccionada */
+.tab-activa {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+/* Botón ✕ para cerrar el teclado */
+.btn-cerrar-teclado {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s;
+    font-weight: bold;
+}
+.btn-cerrar-teclado:hover { color: #ef4444; }
+
+/* Contenedor tipo grilla para los botones de las matemáticas */
+.teclado-grid {
+    display: none; /* Oculto por defecto hasta que tenga la clase 'activa' */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Grilla mostrada */
+.teclado-grid.activa {
+    display: grid;
+}
+
+/* Diseño individual de los botones matemáticos */
+.teclado-grid button {
+    padding: 12px 5px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: 'Consolas', monospace;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.1s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.teclado-grid button:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.teclado-grid button:active {
+    transform: translateY(1px);
+}
+
+/* Botón de borrar (BACKSPACE) con estilo rojo para que resalte */
+.btn-borrar {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    border-color: #fca5a5 !important;
+}

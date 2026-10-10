@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MateSolve - Aprende con Ñioo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- CAPA DE SÍMBOLOS MATEMÁTICOS FLOTANTES -->
+    <div class="math-bg"></div> 
+
+    <main class="contenedor">
+        <!-- ETAPA 2B: Barra lateral izquierda -->
+        <aside class="sidebar">
+            <h1>🧮 MateSolve</h1>
+            <p class="subtitulo">Aprende con Ñioo</p>
+
+            <section class="menu">
+                <!-- Categoría: Álgebra -->
+                <div class="menu-categoria">
+                    <h3>Álgebra</h3>
+                    <button class="card-modulo" data-opcion="sistema" onclick="seleccionar('sistema')">
+                        <span class="card-icono">🧮</span>
+                        <span class="card-titulo">Sistema 2x2</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="interpolacion" onclick="seleccionar('interpolacion')">
+                        <span class="card-icono">📍</span>
+                        <span class="card-titulo">Interpolación</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="matrices" onclick="seleccionar('matrices')">
+                        <span class="card-icono">🔢</span>
+                        <span class="card-titulo">Determinantes</span>
+                    </button>
+                </div>
+
+                <!-- Categoría: Análisis y cálculo -->
+                <div class="menu-categoria">
+                    <h3>Análisis y cálculo</h3>
+                    <button class="card-modulo" data-opcion="raices" onclick="seleccionar('raices')">
+                        <span class="card-icono">📈</span>
+                        <span class="card-titulo">Raíces</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="limites" onclick="seleccionar('limites')">
+                        <span class="card-icono">🎯</span>
+                        <span class="card-titulo">Límites</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="derivadas" onclick="seleccionar('derivadas')">
+                        <span class="card-icono">📉</span>
+                        <span class="card-titulo">Derivadas</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="maximos-minimos" onclick="seleccionar('maximos-minimos')">
+                        <span class="card-icono">📌</span>
+                        <span class="card-titulo">Máx. y Mín.</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="integrales" onclick="seleccionar('integrales')">
+                        <span class="card-icono">∫</span>
+                        <span class="card-titulo">Integral Def.</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="integral-indefinida" onclick="seleccionar('integral-indefinida')">
+                        <span class="card-icono">∫x</span>
+                        <span class="card-titulo">Integral Indef.</span>
+                    </button>
+                </div>
+
+                <!-- Categoría: Herramientas -->
+                <div class="menu-categoria">
+                    <h3>Herramientas</h3>
+                    <button class="card-modulo" data-opcion="graficador" onclick="seleccionar('graficador')">
+                        <span class="card-icono">🎨</span>
+                        <span class="card-titulo">Graficador</span>
+                    </button>
+                    <button class="card-modulo" data-opcion="practica" onclick="seleccionar('practica')">
+                        <span class="card-icono">🎯</span>
+                        <span class="card-titulo">Practicar</span>
+                    </button>
+                </div>
+            </section>
+        </aside>
+
+        <!-- ETAPA 2B: El Pizarrón donde se cargan los módulos elegidos -->
+        <section class="pizarron">
+            <div id="resultado" class="resultado">
+                <p>Seleccioná una opción de la izquierda para comenzar la clase con Ñioo.</p>
+            </div>
+
+            <div id="historial-container" style="margin-top: 20px; text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>📜 Historial reciente</h3>
+                    <button onclick="borrarHistorial()" style="padding: 5px 10px; font-size: 12px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer;">Limpiar</button>
+                </div>
+                <ul id="lista-historial" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- TECLADO MATEMÁTICO GLOBAL DESPLEGABLE -->
+    <div id="panel-teclado" class="panel-teclado teclado-oculto">
+        <div class="teclado-header">
+            <div class="teclado-tabs">
+                <button class="tab-btn tab-activa" onmousedown="cambiarPestanaTeclado(event, 'tab-basico')">Básico</button>
+                <button class="tab-btn" onmousedown="cambiarPestanaTeclado(event, 'tab-funciones')">Funciones</button>
+                <button class="tab-btn" onmousedown="cambiarPestanaTeclado(event, 'tab-calculo')">Cálculo</button>
+            </div>
+            <button class="btn-cerrar-teclado" onmousedown="cerrarTeclado(event)">✕</button>
+        </div>
+        
+        <!-- Pestaña: Básico -->
+        <div id="tab-basico" class="teclado-grid activa">
+            <button onmousedown="insertarSimbolo(event, '7')">7</button>
+            <button onmousedown="insertarSimbolo(event, '8')">8</button>
+            <button onmousedown="insertarSimbolo(event, '9')">9</button>
+            <button onmousedown="insertarSimbolo(event, '/')">÷</button>
+            <button onmousedown="insertarSimbolo(event, 'BACKSPACE')" class="btn-borrar">⌫</button>
+
+            <button onmousedown="insertarSimbolo(event, '4')">4</button>
+            <button onmousedown="insertarSimbolo(event, '5')">5</button>
+            <button onmousedown="insertarSimbolo(event, '6')">6</button>
+            <button onmousedown="insertarSimbolo(event, '*')">×</button>
+            <button onmousedown="insertarSimbolo(event, '^')">xⁿ</button>
+
+            <button onmousedown="insertarSimbolo(event, '1')">1</button>
+            <button onmousedown="insertarSimbolo(event, '2')">2</button>
+            <button onmousedown="insertarSimbolo(event, '3')">3</button>
+            <button onmousedown="insertarSimbolo(event, '-')">-</button>
+            <button onmousedown="insertarSimbolo(event, '^2')">x²</button>
+
+            <button onmousedown="insertarSimbolo(event, '0')">0</button>
+            <button onmousedown="insertarSimbolo(event, '.')">.</button>
+            <button onmousedown="insertarSimbolo(event, '=')">=</button>
+            <button onmousedown="insertarSimbolo(event, '+')">+</button>
+            <button onmousedown="insertarSimbolo(event, 'x')">x</button>
+
+            <button onmousedown="insertarSimbolo(event, 'y')">y</button>
+            <button onmousedown="insertarSimbolo(event, '(')">(</button>
+            <button onmousedown="insertarSimbolo(event, ')')">)</button>
+            <button style="visibility:hidden;"></button>
+            <button style="visibility:hidden;"></button>
+        </div>
+
+        <!-- Pestaña: Funciones -->
+        <div id="tab-funciones" class="teclado-grid">
+            <button onmousedown="insertarSimbolo(event, 'sin(')">sin</button>
+            <button onmousedown="insertarSimbolo(event, 'cos(')">cos</button>
+            <button onmousedown="insertarSimbolo(event, 'tan(')">tan</button>
+            <button onmousedown="insertarSimbolo(event, 'pi')">π</button>
+            <button onmousedown="insertarSimbolo(event, 'e')">e</button>
+
+            <button onmousedown="insertarSimbolo(event, 'sqrt(')">√</button>
+            <button onmousedown="insertarSimbolo(event, 'abs(')">|x|</button>
+            <button onmousedown="insertarSimbolo(event, 'log(')">ln</button>
+            <button onmousedown="insertarSimbolo(event, 'log10(')">log</button>
+            <button onmousedown="insertarSimbolo(event, 'exp(')">exp</button>
+        </div>
+
+        <!-- Pestaña: Cálculo -->
+        <div id="tab-calculo" class="teclado-grid">
+            <button onmousedown="insertarSimbolo(event, '^2')">x²</button>
+            <button onmousedown="insertarSimbolo(event, '^3')">x³</button>
+            <button onmousedown="insertarSimbolo(event, '^')">xⁿ</button>
+            <button onmousedown="insertarSimbolo(event, '(x)')">(x)</button>
+            <button onmousedown="insertarSimbolo(event, '1/x')">1/x</button>
+            <button onmousedown="insertarSimbolo(event, 'sqrt(x)')">√(x)</button>
+            <button onmousedown="insertarSimbolo(event, 'e^x')">eˣ</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
