@@ -13,7 +13,7 @@ document.addEventListener("focusin", (e) => {
         // Guarda el ID del input activo para saber dónde insertar los símbolos
         inputActivoId = e.target.id;
         // Abre automáticamente el panel del teclado matemático
-        abrirTeclado();
+      //  abrirTeclado();
     }
 });
 
