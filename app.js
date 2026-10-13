@@ -489,14 +489,14 @@ async function resolverRaices() {
             if (isNaN(x0)) return mostrarAdvertencia(sol);
             const dfT = math.derivative(fT, 'x').toString();
             const df = (x) => math.evaluate(dfT, { x });
-            diag.push(`Para Newton, necesito la derivada: <br>FORMULA: f'(x) = ${dfT}`);
+            diag.push(`Para Newton, necesito la derivada: <br>f'(x) = ${dfT}`);
             let x = x0, iter = 0;
             while (iter < 10) {
                 iter++;
                 let fx = f(x), dfx = df(x);
                 if (Math.abs(fx) < tol) break;
                 let xSig = x - fx / dfx;
-                diag.push(`Iter ${iter}: x = ${x.toFixed(4)} → x$_{n+1}$ = <strong style="color:#2563eb;">${xSig.toFixed(4)}</strong>`);
+                diag.push(`Iter ${iter}: x = ${x.toFixed(4)} → xₙ₊₁ = <strong style="color:#2563eb;">${xSig.toFixed(4)}</strong>`);
                 x = xSig;
             }
             diag.push(`FORMULA: <strong style="font-size:1.5em; color:#2563eb;">Raíz ≈ ${x.toFixed(4)}</strong>`);
