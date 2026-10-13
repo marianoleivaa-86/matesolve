@@ -636,15 +636,66 @@ async function calcMaxMin() {
     if (!f) return mostrarAdvertencia(sol);
     try {
         const d1 = math.derivative(f, 'x'), d2 = math.derivative(d1, 'x');
+        const fEval = math.compile(f), d1Eval = math.compile(d1.toString()), d2Eval = math.compile(d2.toString());
+        const puntos = [];
+        const agregarPunto = (x) => {
+            if (!Number.isFinite(x) || puntos.some(p => Math.abs(p - x) < 1e-5)) return;
+            puntos.push(x);
+        };
+        const evaluarD1 = (x) => {
+            try {
+                const valor = d1Eval.evaluate({ x });
+                return Number.isFinite(valor) ? valor : NaN;
+            } catch (e) { return NaN; }
+        };
+        // Recorremos la grilla y refinamos cada cambio de signo con bisección.
+        let anteriorX = -10, anterior = evaluarD1(anteriorX);
+        for (let i = 0; i <= 200; i++) {
+            const x = -10 + i * 0.1, actual = evaluarD1(x);
+            if (Number.isFinite(actual) && Math.abs(actual) < 1e-9) agregarPunto(x);
+            if (Number.isFinite(anterior) && Number.isFinite(actual) && anterior * actual < 0) {
+                let izquierda = anteriorX, derecha = x;
+                for (let j = 0; j < 60 && derecha - izquierda > 1e-6; j++) {
+                    const mitad = (izquierda + derecha) / 2, valorMitad = evaluarD1(mitad);
+                    if (!Number.isFinite(valorMitad)) break;
+                    if (Math.abs(valorMitad) < 1e-9) { izquierda = mitad; derecha = mitad; break; }
+                    if (anterior * valorMitad <= 0) derecha = mitad;
+                    else { izquierda = mitad; anterior = valorMitad; }
+                }
+                agregarPunto((izquierda + derecha) / 2);
+            }
+            anteriorX = x; anterior = actual;
+        }
+        puntos.sort((a, b) => a - b);
         let diag = [
             `¡Hola! Soy <strong>Ñioo</strong>. Vamos a analizar los puntos críticos. 📌`,
             `Primero, calculamos la primera derivada para buscar donde la pendiente es cero:`,
             `FORMULA: f'(x) = ${d1.toString()}`,
             `Luego, usamos la segunda derivada para saber si es un Máximo o Mínimo (concavidad):`,
             `FORMULA: f''(x) = ${d2.toString()}`,
-            `Ahora, igualá f'(x) = 0 y evaluá esos puntos en f''(x).`
+            `Busco f'(x) = 0 en el intervalo [-10, 10], con una grilla de paso 0.1 y bisección (tolerancia 0.000001).`
         ];
+        if (puntos.length === 0) {
+            diag.push(`No encontré puntos críticos en [-10, 10].`);
+        } else {
+            diag.push(`Puntos críticos encontrados: ${puntos.map(x => x.toFixed(4)).join(', ')}.`);
+            puntos.forEach(x0 => {
+                const segunda = d2Eval.evaluate({ x: x0 });
+                let conclusion = '';
+                if (Number.isFinite(segunda) && Math.abs(segunda) >= 1e-6) {
+                    conclusion = segunda > 0 ? 'mínimo local' : 'máximo local';
+                } else {
+                    const izquierda = evaluarD1(x0 - 0.01), derecha = evaluarD1(x0 + 0.01);
+                    if (izquierda > 0 && derecha < 0) conclusion = 'máximo local';
+                    else if (izquierda < 0 && derecha > 0) conclusion = 'mínimo local';
+                    else conclusion = 'no es un extremo local';
+                }
+                const fx = fEval.evaluate({ x: x0 });
+                diag.push(`En x₀ = ${x0.toFixed(4)}, f''(x₀) = ${Number(segunda).toFixed(4)}: ${conclusion}. f(x₀) = ${Number(fx).toFixed(4)}.`);
+            });
+        }
         niooDice(diag, 'solMax');
+        guardarEnHistorial(`Máximos y mínimos: ${f}`, `${puntos.length} punto(s) crítico(s)`);
     } catch(e){ sol.innerHTML = `<p>⚠️ Error.</p>`; }
 }
 
@@ -678,13 +729,80 @@ async function calcInt() {
 async function calcIndef() {
     const f = document.getElementById("fIndef").value, sol = document.getElementById("solIndef");
     if (!f) return mostrarAdvertencia(sol);
-    let diag = [
-        `¡Hola! Soy <strong>Ñioo</strong>. Vamos a buscar la antiderivada. ∫`,
-        `Para resolver esto, debemos buscar una función cuya derivada sea ${f}.`,
-        `Recuerda usar la regla inversa de la potencia: ∫ xⁿ dx = (xⁿ⁺¹)/(n+1).`,
-        `No olvides agregar la constante <strong style="color:#2563eb;">+ C</strong> al final del resultado.`
-    ];
-    niooDice(diag, 'solIndef');
+    try {
+        // Separamos recursivamente los sumandos y conservamos el signo de cada uno.
+        const separar = (node, signo = 1) => {
+            if (node.type === 'OperatorNode' && (node.op === '+' || node.op === '-')) {
+                return [...separar(node.args[0], signo), ...separar(node.args[1], signo * (node.op === '+' ? 1 : -1))];
+            }
+            if (node.type === 'UnaryMinusNode') return separar(node.args[0], -signo);
+            return [{ node, signo }];
+        };
+        const numero = node => node && node.type === 'ConstantNode' && Number.isFinite(Number(node.value));
+        const valor = node => Number(node.value);
+        const analizar = node => {
+            if (numero(node)) return { tipo: 'constante', c: valor(node) };
+            if (node.type === 'SymbolNode' && node.name === 'x') return { tipo: 'potencia', c: 1, n: 1 };
+            if (node.type === 'OperatorNode' && node.op === '^' && node.args[0].type === 'SymbolNode' && node.args[0].name === 'x' && numero(node.args[1])) {
+                return { tipo: 'potencia', c: 1, n: valor(node.args[1]) };
+            }
+            if (node.type === 'OperatorNode' && node.op === '/' && numero(node.args[0]) && node.args[1].type === 'SymbolNode' && node.args[1].name === 'x') {
+                return { tipo: 'inversa', c: valor(node.args[0]) };
+            }
+            if (node.type === 'FunctionNode' && ['sin', 'cos', 'exp'].includes(node.fn.name) && node.args[0].toString() === 'x') {
+                return { tipo: node.fn.name, c: 1 };
+            }
+            if (node.type === 'OperatorNode' && node.op === '*') {
+                const partes = [node.args[0], node.args[1]], indice = partes.findIndex(numero);
+                if (indice !== -1) {
+                    const base = analizar(partes[1 - indice]);
+                    if (base) { base.c *= valor(partes[indice]); return base; }
+                }
+            }
+            return null;
+        };
+        const fraccion = n => {
+            for (let den = 1; den <= 1000; den++) {
+                const num = Math.round(n * den);
+                if (Math.abs(n - num / den) < 1e-10) return { num, den };
+            }
+            return null;
+        };
+        const basePotencia = n => Number.isInteger(n) && n >= 0 && n <= 9 ? ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'][n] : `^${n}`;
+        const multiplicarTexto = (c, base) => {
+            const abs = Math.abs(c), frac = fraccion(abs);
+            if (Math.abs(abs - 1) < 1e-12) return base;
+            if (frac && frac.den !== 1) return frac.num === 1 ? `${base}/${frac.den}` : `${frac.num}*${base}/${frac.den}`;
+            return `${abs.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')}*${base}`;
+        };
+        const partes = separar(math.parse(f));
+        const resultados = [], expresiones = [], explicaciones = [];
+        for (const parte of partes) {
+            const t = analizar(parte.node);
+            if (!t || (t.tipo === 'potencia' && t.n === -1)) throw new Error('no soportado');
+            const c = parte.signo * t.c;
+            if (t.tipo === 'constante') { resultados.push({ c, texto: multiplicarTexto(c, 'x') }); expresiones.push(`${c}*x`); explicaciones.push(`∫ ${parte.node} dx = ${multiplicarTexto(c, 'x')}`); }
+            else if (t.tipo === 'potencia') { const k = c / (t.n + 1), exponente = t.n + 1, base = `x${basePotencia(exponente)}`; resultados.push({ c: k, texto: multiplicarTexto(k, base) }); expresiones.push(`${k}*x^(${exponente})`); explicaciones.push(`∫ ${parte.node} dx = xⁿ⁺¹/(n+1)`); }
+            else if (t.tipo === 'sin') { resultados.push({ c: -c, texto: multiplicarTexto(-c, 'cos(x)') }); expresiones.push(`${-c}*cos(x)`); explicaciones.push(`∫ sin x dx = −cos x`); }
+            else if (t.tipo === 'cos') { resultados.push({ c, texto: multiplicarTexto(c, 'sin(x)') }); expresiones.push(`${c}*sin(x)`); explicaciones.push(`∫ cos x dx = sin x`); }
+            else if (t.tipo === 'exp') { resultados.push({ c, texto: multiplicarTexto(c, 'exp(x)') }); expresiones.push(`${c}*exp(x)`); explicaciones.push(`∫ eˣ dx = eˣ`); }
+            else if (t.tipo === 'inversa') { resultados.push({ c, texto: multiplicarTexto(c, 'ln|x|') }); expresiones.push(`${c}*log(abs(x))`); explicaciones.push(`∫ 1/x dx = ln|x|`); }
+        }
+        const unir = lista => lista.map((item, i) => `${i === 0 ? (item.c < 0 ? '-' : '') : (item.c < 0 ? ' - ' : ' + ')}${item.texto}`).join('');
+        const resultado = `${unir(resultados)} + C`;
+        let verificado = false;
+        try {
+            const derivada = math.derivative(expresiones.join(' + '), 'x');
+            const original = math.compile(f), calculada = math.compile(derivada.toString());
+            verificado = [0.5, 1.5, 2.5].every(x => Math.abs(original.evaluate({ x }) - calculada.evaluate({ x })) < 1e-6);
+        } catch (e) { verificado = false; }
+        const diag = [`¡Hola! Soy <strong>Ñioo</strong>. Vamos a buscar la antiderivada. ∫`, ...explicaciones, `FORMULA: <strong style="font-size:1.5em; color:#2563eb;">${resultado}</strong>`];
+        if (verificado) diag.push('✔ Verificación: al derivar el resultado volvemos a f(x)');
+        niooDice(diag, 'solIndef');
+        guardarEnHistorial(`Integral indefinida: ${f}`, resultado);
+    } catch(e) {
+        niooDice([`Por ahora resuelvo polinomios y funciones básicas.`], 'solIndef');
+    }
 }
 
 async function calcMat() {
