@@ -417,14 +417,6 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
     color: #b91c1c !important;
     border-color: #fca5a5 !important;
 }
-
-
-No cambies nada. Ejecutá estos dos comandos y pegame la salida completa,
-sin resumir ni comentar:
-
-git log --oneline -3
-git diff
-
 /* ===== MEJORAS PARA CELULAR (agregado) ===== */
 
 .aviso-deslizamiento { display: none; }
