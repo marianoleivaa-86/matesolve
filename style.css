@@ -417,3 +417,97 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
     color: #b91c1c !important;
     border-color: #fca5a5 !important;
 }
+
+
+No cambies nada. Ejecutá estos dos comandos y pegame la salida completa,
+sin resumir ni comentar:
+
+git log --oneline -3
+git diff
+
+/* ===== MEJORAS PARA CELULAR (agregado) ===== */
+
+.aviso-deslizamiento { display: none; }
+
+@media (max-width: 768px) {
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 0;
+    }
+
+    .contenedor {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    .sidebar::after {
+        content: '';
+        position: absolute;
+        top: 85px;
+        right: 0;
+        bottom: 10px;
+        width: 34px;
+        background: linear-gradient(to right, rgba(255,255,255,0), var(--glass-bg));
+        pointer-events: none;
+    }
+
+    .aviso-deslizamiento {
+        display: block;
+        margin: 0 0 4px;
+        color: var(--text-muted);
+        font-size: 12px;
+        text-align: right;
+    }
+
+    .pizarron {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+    }
+
+    input,
+    select,
+    button {
+        min-width: 0;
+        max-width: 100%;
+        min-height: 44px;
+        font-size: 16px;
+    }
+    input,
+    select {
+        width: 100%;
+    }
+
+    #resultado [style*="display:flex"] {
+        min-width: 0;
+    }
+    #resultado [style*="display:flex"] > input {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    table,
+    #resultado table,
+    canvas {
+        max-width: 100%;
+    }
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+    canvas {
+        height: auto !important;
+    }
+
+    .bubble,
+    .formula-bubble {
+        max-width: 100%;
+        min-width: 0;
+        font-size: 16px;
+        overflow-wrap: anywhere;
+    }
+    .message-row {
+        min-width: 0;
+    }
+}
