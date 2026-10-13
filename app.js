@@ -1,9 +1,11 @@
 let respuestaCorrecta = null;
 let rachaAciertos = 0;
 let inputActivoId = null;
-// Variable global para mantener la instancia activa de Chart.js en Interpolación.
-// Se reutiliza para destruirla antes de crear una nueva y evitar superposiciones.
+// Variables globales para las instancias de Chart.js de cada módulo.
+// Se destruyen antes de crear una nueva para evitar superposiciones.
 let chartInterpolacion = null;
+let chartMaxMin        = null;
+let chartIntegral      = null;
 
 // =============================================================================
 // UTILIDADES GENERALES
@@ -638,6 +640,213 @@ function imprimirPizarron() {
     window.print();
 }
 
+// =============================================================================
+// GRÁFICA DE MÁXIMOS Y MÍNIMOS (Chart.js)
+// =============================================================================
+
+/**
+ * Dibuja la curva de f(x) resaltando los puntos críticos (máximos en rojo, mínimos en verde).
+ * @param {string}   f_str          - Expresión de la función (ej: "x^3 - 3*x")
+ * @param {Array}    puntosCriticos - Arreglo de objetos {x, y, tipo} ('máximo local' | 'mínimo local')
+ */
+function dibujarGraficoMaxMin(f_str, puntosCriticos) {
+    // Destruye la instancia anterior para evitar superposiciones
+    if (chartMaxMin) { chartMaxMin.destroy(); chartMaxMin = null; }
+
+    const canvas = document.getElementById('graficoMaxMin');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Compilamos la función una sola vez para evaluarla eficientemente
+    const fEval = math.compile(f_str);
+    const evalF = x => { try { return fEval.evaluate({ x }); } catch { return NaN; } };
+
+    // Rango de la curva: alrededor de los puntos críticos o [-5, 5] por defecto
+    const xs = puntosCriticos.map(p => p.x);
+    const margen = 3;
+    const xMin = (xs.length ? Math.min(...xs) : -5) - margen;
+    const xMax = (xs.length ? Math.max(...xs) : 5)  + margen;
+
+    // Generamos 300 puntos para una curva muy suave
+    const pasos = 300;
+    const etiquetas = [], valoresCurva = [];
+    for (let i = 0; i <= pasos; i++) {
+        const xi = xMin + (xMax - xMin) * (i / pasos);
+        etiquetas.push(parseFloat(xi.toFixed(3)));
+        const yi = evalF(xi);
+        // Acotamos valores extremos para no romper la escala del gráfico
+        valoresCurva.push(Number.isFinite(yi) ? parseFloat(yi.toFixed(4)) : null);
+    }
+
+    // Separamos los puntos críticos por tipo para colorearlos diferente
+    const datosMaximos = puntosCriticos
+        .filter(p => p.tipo === 'máximo local')
+        .map(p => ({ x: p.x, y: p.y }));
+    const datosMinimos = puntosCriticos
+        .filter(p => p.tipo === 'mínimo local')
+        .map(p => ({ x: p.x, y: p.y }));
+
+    chartMaxMin = new Chart(ctx, {
+        data: {
+            labels: etiquetas,
+            datasets: [
+                {
+                    // Curva continua de f(x)
+                    type: 'line',
+                    label: `f(x) = ${f_str}`,
+                    data: valoresCurva,
+                    borderColor: '#2563eb',
+                    borderWidth: 2.5,
+                    backgroundColor: 'rgba(37, 99, 235, 0.07)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    spanGaps: true,   // une los segmentos aunque haya null en el medio
+                    order: 3
+                },
+                {
+                    // Máximos locales: marcas rojas
+                    type: 'scatter',
+                    label: 'Máximo local',
+                    data: datosMaximos,
+                    backgroundColor: '#ef4444',
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    order: 1
+                },
+                {
+                    // Mínimos locales: marcas verdes
+                    type: 'scatter',
+                    label: 'Mínimo local',
+                    data: datosMinimos,
+                    backgroundColor: '#16a34a',
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    order: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        title: items => `x = ${parseFloat(items[0].label).toFixed(4)}`,
+                        label: item  => `y = ${parseFloat(item.parsed.y).toFixed(4)}`
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: 'x' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y: { title: { display: true, text: 'f(x)' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+            }
+        }
+    });
+}
+
+// =============================================================================
+// GRÁFICA DE INTEGRAL DEFINIDA E INDEFINIDA (Chart.js)
+// =============================================================================
+
+/**
+ * Dibuja la curva de f(x) sombreando el área bajo la curva entre [a, b].
+ * Si no se especifican límites (integral indefinida), muestra la curva sin relleno parcial.
+ * @param {string} f_str  - Expresión de la función (ej: "x^2")
+ * @param {number} [a]    - Límite inferior de integración (opcional)
+ * @param {number} [b]    - Límite superior de integración (opcional)
+ */
+function dibujarGraficoIntegral(f_str, a, b) {
+    // Destruye la instancia anterior para evitar superposiciones
+    if (chartIntegral) { chartIntegral.destroy(); chartIntegral = null; }
+
+    const canvas = document.getElementById('graficoIntegral');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const fEval = math.compile(f_str);
+    const evalF = x => { try { return fEval.evaluate({ x }); } catch { return NaN; } };
+
+    // Determinamos el rango de la curva
+    const tieneIntervalos = Number.isFinite(a) && Number.isFinite(b);
+    const margen = tieneIntervalos ? Math.max((b - a) * 0.3, 1) : 3;
+    const xMin = tieneIntervalos ? a - margen : -5;
+    const xMax = tieneIntervalos ? b + margen :  5;
+
+    const pasos = 250;
+    const etiquetas = [], valoresCurva = [], valoresSombra = [];
+    for (let i = 0; i <= pasos; i++) {
+        const xi = xMin + (xMax - xMin) * (i / pasos);
+        const yi = evalF(xi);
+        const yFinito = Number.isFinite(yi) ? parseFloat(yi.toFixed(4)) : null;
+        etiquetas.push(parseFloat(xi.toFixed(3)));
+        valoresCurva.push(yFinito);
+        // El relleno sombreado solo existe dentro del intervalo [a, b]
+        if (tieneIntervalos && xi >= a && xi <= b) {
+            valoresSombra.push(yFinito);
+        } else {
+            valoresSombra.push(null);
+        }
+    }
+
+    chartIntegral = new Chart(ctx, {
+        data: {
+            labels: etiquetas,
+            datasets: [
+                {
+                    // Área sombreada entre a y b (solo para integral definida)
+                    type: 'line',
+                    label: tieneIntervalos ? `Área [${a}, ${b}]` : 'f(x)',
+                    data: valoresSombra,
+                    borderColor: 'rgba(99, 102, 241, 0)',   // borde invisible
+                    backgroundColor: 'rgba(99, 102, 241, 0.20)',
+                    fill: 'origin',
+                    tension: 0.35,
+                    pointRadius: 0,
+                    spanGaps: false,
+                    order: 2
+                },
+                {
+                    // Curva completa de f(x)
+                    type: 'line',
+                    label: `f(x) = ${f_str}`,
+                    data: valoresCurva,
+                    borderColor: '#2563eb',
+                    borderWidth: 2.5,
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    spanGaps: true,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        title: items => `x = ${parseFloat(items[0].label).toFixed(4)}`,
+                        label: item  => `y = ${parseFloat(item.parsed.y).toFixed(4)}`
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: 'x' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y: { title: { display: true, text: 'f(x)' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+            }
+        }
+    });
+}
+
 // Muestra u oculta los campos de entrada según el método de raíces seleccionado
 function toggleRaizInputs() {
     // Obtiene el valor actual del menú desplegable (biseccion, reglaFalsa, newton)
@@ -881,8 +1090,53 @@ async function calcMaxMin() {
                 diag.push(`En x₀ = ${x0.toFixed(4)}, f''(x₀) = ${Number(segunda).toFixed(4)}: ${conclusion}. f(x₀) = ${Number(fx).toFixed(4)}.`);
             });
         }
-        niooDice(diag, 'solMax');
+        // Esperamos a que Ñioo termine de mostrar el diálogo
+        await niooDice(diag, 'solMax');
         guardarEnHistorial(`Máximos y mínimos: ${f}`, `${puntos.length} punto(s) crítico(s)`);
+
+        // ─── GRÁFICA INTERACTIVA ──────────────────────────────────────────────
+        const solMax = document.getElementById('solMax');
+
+        // Armamos el arreglo de puntos críticos con su tipo para colorear el scatter
+        const puntosCriticosGraf = puntos.map(x0 => {
+            const segunda = d2Eval.evaluate({ x: x0 });
+            let tipo = 'no es un extremo local';
+            if (Number.isFinite(segunda) && Math.abs(segunda) >= 1e-6) {
+                tipo = segunda > 0 ? 'mínimo local' : 'máximo local';
+            } else {
+                const izq = d1Eval.evaluate({ x: x0 - 0.01 });
+                const der = d1Eval.evaluate({ x: x0 + 0.01 });
+                if (izq > 0 && der < 0) tipo = 'máximo local';
+                else if (izq < 0 && der > 0) tipo = 'mínimo local';
+            }
+            return { x: x0, y: parseFloat(fEval.evaluate({ x: x0 }).toFixed(4)), tipo };
+        });
+
+        // Insertamos el canvas en el DOM
+        const contenedorGrafMax = document.createElement('div');
+        contenedorGrafMax.className = 'contenedor-grafico';
+        contenedorGrafMax.innerHTML = `
+            <h4 style="margin:0 0 10px; color:#2563eb; font-family:'Poppins',sans-serif;">📈 Gráfica de f(x) con puntos críticos</h4>
+            <canvas id="graficoMaxMin"></canvas>
+        `;
+        solMax.appendChild(contenedorGrafMax);
+        dibujarGraficoMaxMin(f, puntosCriticosGraf);
+
+        // ─── BOTONERA DE EXPORTACIÓN ─────────────────────────────────────────
+        const textoMaxMin = [
+            `=== Máximos y Mínimos - MateSolve ===`,
+            `f(x) = ${f}`,
+            `f'(x) = ${d1.toString()} | f''(x) = ${d2.toString()}`,
+            puntos.length ? `Puntos críticos: ${puntos.map(x0 => x0.toFixed(4)).join(', ')}` : 'Sin puntos críticos en [-10, 10]'
+        ].join('\n');
+        const barraMax = document.createElement('div');
+        barraMax.className = 'barra-exportacion';
+        barraMax.innerHTML = `
+            <button class="btn-exportar" onclick="copiarSolucion(this, \`${textoMaxMin.replace(/`/g, "'")}\`)">📋 Copiar Solución</button>
+            <button class="btn-exportar" onclick="imprimirPizarron()">📥 Imprimir Reporte</button>
+        `;
+        solMax.appendChild(barraMax);
+
     } catch(e){ sol.innerHTML = `<p>⚠️ Error.</p>`; }
 }
 
@@ -908,8 +1162,36 @@ async function calcInt() {
             `FORMULA: <strong style="font-size:1.5em; color:#2563eb;">Área ≈ ${res.toFixed(6)}</strong>`,
             `¡Listo! Este valor representa el espacio acumulado bajo la función.`
         ];
-        niooDice(diag, 'solInt');
+        // Esperamos a que Ñioo termine
+        await niooDice(diag, 'solInt');
         guardarEnHistorial(`Integral [${a},${b}]`, `Área ≈ ${res.toFixed(4)}`);
+
+        // ─── GRÁFICA INTERACTIVA ──────────────────────────────────────────────
+        const solInt = document.getElementById('solInt');
+        const contenedorGrafInt = document.createElement('div');
+        contenedorGrafInt.className = 'contenedor-grafico';
+        contenedorGrafInt.innerHTML = `
+            <h4 style="margin:0 0 10px; color:#2563eb; font-family:'Poppins',sans-serif;">∫ Área bajo la curva entre [${a}, ${b}]</h4>
+            <canvas id="graficoIntegral"></canvas>
+        `;
+        solInt.appendChild(contenedorGrafInt);
+        dibujarGraficoIntegral(fS, a, b);
+
+        // ─── BOTONERA DE EXPORTACIÓN ─────────────────────────────────────────
+        const textoInt = [
+            `=== Integral Definida - MateSolve ===`,
+            `f(x) = ${fS}`,
+            `Intervalo: [${a}, ${b}]`,
+            `Área ≈ ${res.toFixed(6)} (Regla del Trapecio, n=1000)`
+        ].join('\n');
+        const barraInt = document.createElement('div');
+        barraInt.className = 'barra-exportacion';
+        barraInt.innerHTML = `
+            <button class="btn-exportar" onclick="copiarSolucion(this, \`${textoInt.replace(/`/g, "'")}\`)">📋 Copiar Solución</button>
+            <button class="btn-exportar" onclick="imprimirPizarron()">📥 Imprimir Reporte</button>
+        `;
+        solInt.appendChild(barraInt);
+
     } catch(e){ sol.innerHTML = `<p>⚠️ Error.</p>`; }
 }
 
@@ -985,8 +1267,36 @@ async function calcIndef() {
         } catch (e) { verificado = false; }
         const diag = [`¡Hola! Soy <strong>Ñioo</strong>. Vamos a buscar la antiderivada. ∫`, ...explicaciones, `FORMULA: <strong style="font-size:1.5em; color:#2563eb;">${resultado}</strong>`];
         if (verificado) diag.push('✔ Verificación: al derivar el resultado volvemos a f(x)');
-        niooDice(diag, 'solIndef');
+        // Esperamos a que Ñioo termine
+        await niooDice(diag, 'solIndef');
         guardarEnHistorial(`Integral indefinida: ${f}`, resultado);
+
+        // ─── GRÁFICA DE f(x) (sin área sombreada, sin límites) ────────────────
+        const solIndef = document.getElementById('solIndef');
+        const contenedorGrafIndef = document.createElement('div');
+        contenedorGrafIndef.className = 'contenedor-grafico';
+        contenedorGrafIndef.innerHTML = `
+            <h4 style="margin:0 0 10px; color:#2563eb; font-family:'Poppins',sans-serif;">∫ Gráfica de f(x) = ${f}</h4>
+            <canvas id="graficoIntegral"></canvas>
+        `;
+        solIndef.appendChild(contenedorGrafIndef);
+        // Sin límites: a y b quedan como NaN → dibujarGraficoIntegral usa rango por defecto
+        dibujarGraficoIntegral(f, NaN, NaN);
+
+        // ─── BOTONERA DE EXPORTACIÓN ─────────────────────────────────────────
+        const textoIndef = [
+            `=== Integral Indefinida - MateSolve ===`,
+            `f(x) = ${f}`,
+            `Resultado: ${resultado}`
+        ].join('\n');
+        const barraIndef = document.createElement('div');
+        barraIndef.className = 'barra-exportacion';
+        barraIndef.innerHTML = `
+            <button class="btn-exportar" onclick="copiarSolucion(this, \`${textoIndef.replace(/`/g, "'")}\`)">📋 Copiar Solución</button>
+            <button class="btn-exportar" onclick="imprimirPizarron()">📥 Imprimir Reporte</button>
+        `;
+        solIndef.appendChild(barraIndef);
+
     } catch(e) {
         niooDice([`Por ahora resuelvo polinomios y funciones básicas.`], 'solIndef');
     }

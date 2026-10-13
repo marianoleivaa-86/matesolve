@@ -617,6 +617,42 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
     }
 }
 
+/* Ajustes móvil específicos para gráficas y botonera de exportación */
+@media (max-width: 768px) {
+    /* El contenedor del canvas no debe abrumar la pantalla */
+    .contenedor-grafico {
+        max-height: 260px;   /* máximo 260px en celular */
+        padding: 10px;
+        margin-top: 12px;
+    }
+
+    /* El canvas respeta la altura del contenedor */
+    .contenedor-grafico canvas,
+    #graficoInterpolacion,
+    #graficoMaxMin,
+    #graficoIntegral {
+        max-height: 220px;
+    }
+
+    /* Botonera en fila, ancho completo y altura táctil mínima */
+    .barra-exportacion {
+        justify-content: stretch;
+        flex-direction: row;    /* mantiene los dos botones en fila si caben */
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    /* Cada botón ocupa el 50% del ancho y respeta la altura táctil */
+    .btn-exportar {
+        flex: 1 1 0;           /* distribuye el espacio en partes iguales */
+        justify-content: center;
+        min-height: 44px;       /* tamaño táctil mínimo */
+        padding: 8px 10px;
+        font-size: 12px;
+        max-width: 100%;        /* nunca desborda el pizarrón */
+    }
+}
+
 /* ==========================================================================
    TARJETA DEL GRÁFICO DE INTERPOLACIÓN
    ========================================================================== */
@@ -734,9 +770,9 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
         page-break-inside: avoid;
     }
 
-    /* Encabezado de impresión con el nombre de la app */
+    /* Encabezado genérico de impresión con el nombre de la app */
     .pizarron::before {
-        content: 'MateSolve — Informe de Interpolación';
+        content: 'MateSolve — Informe de cálculo';
         display: block;
         font-family: 'Poppins', sans-serif;
         font-size: 18px;
