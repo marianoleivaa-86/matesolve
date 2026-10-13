@@ -1,6 +1,9 @@
 let respuestaCorrecta = null;
 let rachaAciertos = 0;
 let inputActivoId = null;
+// Variable global para mantener la instancia activa de Chart.js en Interpolación.
+// Se reutiliza para destruirla antes de crear una nueva y evitar superposiciones.
+let chartInterpolacion = null;
 
 // =============================================================================
 // UTILIDADES GENERALES
@@ -445,10 +448,194 @@ async function resolverInterp() {
         `¡Listo! 🚀`
     );
     
-    // Envía todo el diálogo acumulado a la interfaz para que Ñioo lo muestre animado
-    niooDice(diag, 'solInterp');
+    // Envía todo el diálogo acumulado a la interfaz para que Ñioo lo muestre animado.
+    // Esperamos a que termine para luego insertar el gráfico y los botones debajo.
+    await niooDice(diag, 'solInterp');
+
     // Guarda este cálculo en el historial de operaciones para futuras referencias
     guardarEnHistorial(`Interp Newton x=${xO}`, `Y ≈ ${resY.toFixed(4)}`);
+
+    // ─── GRÁFICA INTERACTIVA ──────────────────────────────────────────────────
+    // Insertamos el contenedor del canvas debajo del chat de Ñioo
+    const solInterp = document.getElementById('solInterp');
+
+    // Contenedor del gráfico con clase para estilos CSS
+    const contenedorGrafico = document.createElement('div');
+    contenedorGrafico.className = 'contenedor-grafico';
+    contenedorGrafico.innerHTML = `
+        <h4 style="margin:0 0 10px; color:#2563eb; font-family:'Poppins',sans-serif;">📈 Gráfica del polinomio interpolante</h4>
+        <canvas id="graficoInterpolacion"></canvas>
+    `;
+    solInterp.appendChild(contenedorGrafico);
+
+    // Dibujamos la gráfica usando los puntos y el polinomio calculado
+    dibujarGraficoInterpolacion(xV, yV, (x) => {
+        // Evalúa el polinomio de Newton en cualquier x usando los mismos datos
+        let yk = diff[0][0];
+        const sv = (x - xV[0]) / h;
+        for (let k = 1; k < n; k++) {
+            yk += numeroCombinatorio(sv, k) * diff[0][k];
+        }
+        return yk;
+    });
+
+    // ─── BOTONERA DE EXPORTACIÓN ─────────────────────────────────────────────
+    // Genera el texto plano de la solución para copiarlo al portapapeles
+    const textoSolucion = [
+        `=== Interpolación de Newton - MateSolve ===`,
+        `Puntos: ${xV.map((x, i) => `(${x}, ${yV[i]})`).join(', ')}`,
+        `h = ${h} | x a evaluar = ${xO} | s = ${((xO - xV[0]) / h).toFixed(4)}`,
+        `Resultado: P(${xO}) ≈ ${resY.toFixed(4)}`
+    ].join('\n');
+
+    // Renderizamos la barra de herramientas con los dos botones
+    const barraExport = document.createElement('div');
+    barraExport.className = 'barra-exportacion';
+    barraExport.innerHTML = `
+        <button class="btn-exportar" onclick="copiarSolucion(this, \`${textoSolucion.replace(/`/g, "'")}\`)">📋 Copiar Solución</button>
+        <button class="btn-exportar" onclick="imprimirPizarron()">📥 Imprimir Pizarrón</button>
+    `;
+    solInterp.appendChild(barraExport);
+}
+
+// =============================================================================
+// GRÁFICA INTERACTIVA DE INTERPOLACIÓN (Chart.js)
+// =============================================================================
+
+/**
+ * Dibuja la curva del polinomio interpolante y los puntos dados.
+ * @param {number[]} puntosX  - Arreglo de coordenadas X de los datos
+ * @param {number[]} puntosY  - Arreglo de coordenadas Y de los datos
+ * @param {Function} funcionPolinomio - Función que evalúa el polinomio en un x dado
+ */
+function dibujarGraficoInterpolacion(puntosX, puntosY, funcionPolinomio) {
+    // Si ya existe un gráfico previo, lo destruimos para evitar superposiciones
+    if (chartInterpolacion) {
+        chartInterpolacion.destroy();
+        chartInterpolacion = null;
+    }
+
+    const canvas = document.getElementById('graficoInterpolacion');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Calculamos el rango X con un margen (buffer) a cada lado para ver la curva completa
+    const minX = Math.min(...puntosX);
+    const maxX = Math.max(...puntosX);
+    const buffer = (maxX - minX) * 0.2 || 1; // mínimo 1 si todos los X son iguales
+    const xInicio = minX - buffer;
+    const xFin    = maxX + buffer;
+
+    // Generamos 200 puntos equidistantes para obtener una curva suave
+    const pasos = 200;
+    const curvaX = [], curvaY = [];
+    for (let i = 0; i <= pasos; i++) {
+        const xi = xInicio + (xFin - xInicio) * (i / pasos);
+        curvaX.push(parseFloat(xi.toFixed(4)));
+        curvaY.push(parseFloat(funcionPolinomio(xi).toFixed(4)));
+    }
+
+    // Preparamos los puntos originales como objetos {x, y} para el dataset scatter
+    const puntosDataset = puntosX.map((x, i) => ({ x, y: puntosY[i] }));
+
+    // Instanciamos el gráfico con Chart.js
+    chartInterpolacion = new Chart(ctx, {
+        data: {
+            // El dataset de la curva usa los labels del eje X
+            labels: curvaX,
+            datasets: [
+                {
+                    // Curva continua del polinomio
+                    type: 'line',
+                    label: 'Polinomio P(x)',
+                    data: curvaY,
+                    borderColor: '#2563eb',
+                    borderWidth: 2.5,
+                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    fill: true,
+                    tension: 0.4,       // curva suavizada (cubic spline)
+                    pointRadius: 0,     // sin puntos en la curva para que se vea limpia
+                    order: 2            // se dibuja primero (detrás de los puntos)
+                },
+                {
+                    // Puntos dados por el usuario destacados con marcas grandes
+                    type: 'scatter',
+                    label: 'Puntos dados',
+                    data: puntosDataset,
+                    backgroundColor: '#6366f1',
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    order: 1            // se dibuja encima de la curva
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { font: { family: 'Inter, sans-serif', size: 12 } }
+                },
+                tooltip: {
+                    // Muestra coordenadas (x, y) con 4 decimales en el tooltip
+                    callbacks: {
+                        title: (items) => `x = ${parseFloat(items[0].label).toFixed(4)}`,
+                        label: (item) => `y = ${parseFloat(item.parsed.y).toFixed(4)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'x', font: { size: 13 } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    title: { display: true, text: 'P(x)', font: { size: 13 } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
+// HERRAMIENTAS DE EXPORTACIÓN
+// =============================================================================
+
+/**
+ * Copia el texto de la solución al portapapeles.
+ * Cambia el texto del botón brevemente para dar feedback visual.
+ * @param {HTMLElement} btn  - El botón que fue clickeado
+ * @param {string} texto     - Texto plano de la solución a copiar
+ */
+function copiarSolucion(btn, texto) {
+    navigator.clipboard.writeText(texto).then(() => {
+        // Feedback visual: cambia el texto del botón por 2 segundos
+        const original = btn.textContent;
+        btn.textContent = '✅ ¡Copiado!';
+        btn.style.background = '#d1fae5';
+        btn.style.color = '#065f46';
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.style.background = '';
+            btn.style.color = '';
+        }, 2000);
+    }).catch(() => {
+        alert('No se pudo copiar. Usá Ctrl+C manualmente.');
+    });
+}
+
+/**
+ * Dispara el diálogo de impresión del navegador.
+ * El @media print en style.css se encarga de ocultar el menú lateral
+ * y mostrar solo el contenido del pizarrón.
+ */
+function imprimirPizarron() {
+    window.print();
 }
 
 // Muestra u oculta los campos de entrada según el método de raíces seleccionado
