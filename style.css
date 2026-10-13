@@ -108,6 +108,37 @@ body {
     font-size: 32px;
     margin-top: 10px;
     margin-bottom: 5px;
+    /* Flexbox para alinear el cuadrado del logo y el texto */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Cuadrado con degradado que contiene el símbolo ∑ */
+.logo-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--primary-grad);
+    color: #fff;
+    font-size: 26px;
+    font-family: 'Times New Roman', serif;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    flex-shrink: 0;
+}
+
+/* Texto "MateSolve" con degradado azul-violeta y tipografía Poppins */
+.logo-texto {
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    background: var(--primary-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .sidebar .subtitulo { font-size: 13px; margin-bottom: 25px; }
 
@@ -126,7 +157,7 @@ body {
     margin-bottom: 8px;
 }
 
-/* Diseño del botón chico (Reemplaza a la tarjeta grande) */
+/* Diseño del botón de menú (parece un botón, no texto suelto) */
 .card-modulo {
     display: flex;
     flex-direction: row;
@@ -134,19 +165,24 @@ body {
     justify-content: flex-start;
     text-align: left;
     padding: 10px 15px;
-    border: none;
+    /* Fondo blanco con borde suave y sombra */
+    border: 1px solid #dbeafe;
     border-radius: 12px;
-    background: transparent;
+    background: #ffffff;
     color: var(--text-main);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 12px;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.06);
+    width: 100%;
 }
 
-/* Efecto Hover */
+/* Efecto al pasar el mouse: levanta un poco y borde azul */
 .card-modulo:hover { 
-    transform: translateX(5px);
-    background: rgba(37, 99, 235, 0.05);
+    transform: translateY(-2px);
+    background: #eff6ff;
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
 }
 
 /* Estilo para la herramienta seleccionada */
@@ -436,10 +472,11 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
         gap: 6px;
     }
 
-    /* Barra lateral angosta, fija durante el scroll vertical de la página. */
+    /* Barra lateral angosta, fija durante el scroll vertical de la página.
+       Ensanchada a 92px para que entren los nombres completos. */
     .sidebar {
-        flex: 0 0 84px;
-        width: 84px;
+        flex: 0 0 92px;
+        width: 92px;
         height: 100vh;
         height: 100dvh;
         max-height: none;
@@ -455,32 +492,44 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
     .aviso-deslizamiento {
         display: none;
     }
+    /* Logo en celular: cuadrado ∑ centrado con texto abajo */
     .sidebar h1 {
-        overflow: hidden;
+        overflow: visible;
         font-size: 0;
         text-align: center;
-        white-space: nowrap;
+        white-space: normal;
+        flex-direction: column;
+        gap: 2px;
     }
-    .sidebar h1::before {
-        content: '🧮';
-        font-size: 26px;
+    /* Se elimina el ::before con emoji; ahora usa .logo-icono y .logo-texto */
+    .logo-icono {
+        width: 48px;
+        height: 48px;
+        font-size: 28px;
+        border-radius: 12px;
+    }
+    .logo-texto {
+        font-size: 10px;
+        font-weight: 700;
+        /* En celular el degradado de texto puede no verse bien; forzamos azul */
+        -webkit-text-fill-color: var(--primary-color);
     }
     .sidebar .subtitulo {
         display: none;
     }
 
-    /* Categorías y menú se apilan para eliminar el scroll horizontal. */
+    /* Categorías y menú se apilan con separación de 6px entre botones. */
     .menu {
         display: flex;
         flex-direction: column;
         overflow: visible;
         white-space: normal;
-        gap: 8px;
+        gap: 6px;
     }
     .menu-categoria {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
         margin-bottom: 8px;
     }
     .menu-categoria h3 {
@@ -489,23 +538,29 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
         text-align: center;
         overflow-wrap: anywhere;
     }
+    /* Botones del menú en celular: apilados con separación y altura táctil mínima */
     .card-modulo {
         width: 100%;
         min-height: 44px;
-        padding: 5px 2px;
+        padding: 5px 4px;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         gap: 2px;
         text-align: center;
+        /* Mantiene el borde y sombra también en mobile */
+        border: 1px solid #dbeafe;
+        box-shadow: 0 1px 4px rgba(37, 99, 235, 0.08);
     }
     .card-icono {
         font-size: 18px;
     }
+    /* Fix: "Determinantes", "Interpolación" e "Integral Indef." no se parten */
     .card-titulo {
-        font-size: 11px;
+        font-size: 10.5px;
         line-height: 1.1;
-        overflow-wrap: anywhere;
+        overflow-wrap: normal;
+        word-break: normal;
     }
 
     /* El pizarrón ocupa todo el espacio restante y usa el scroll de la página. */
@@ -538,6 +593,13 @@ input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #e2
     #resultado [style*="display:flex"] > input {
         flex: 1 1 90px;
         min-width: 0;
+    }
+    /* Botones principales (hijos directos de #resultado) centrados en mobile.
+       No afecta botones con estilos en línea propios (ej. "Agregar Punto"). */
+    #resultado > button {
+        display: block;
+        margin: 15px auto;
+        min-width: 60%;
     }
 
     /* Tablas y gráficos se mantienen dentro del ancho disponible. */

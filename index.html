@@ -14,7 +14,11 @@
     <main class="contenedor">
         <!-- ETAPA 2B: Barra lateral izquierda -->
         <aside class="sidebar">
-            <h1>🧮 MateSolve</h1>
+            <!-- Logo nuevo: cuadrado con degradado + símbolo ∑ + texto -->
+            <h1>
+                <span class="logo-icono">∑</span>
+                <span class="logo-texto">MateSolve</span>
+            </h1>
             <p class="subtitulo">Aprende con Ñioo</p>
             <p class="aviso-deslizamiento" aria-hidden="true">Deslizá el menú →</p>
 
@@ -23,7 +27,8 @@
                 <div class="menu-categoria">
                     <h3>Álgebra</h3>
                     <button class="card-modulo" data-opcion="sistema" onclick="seleccionar('sistema')">
-                        <span class="card-icono">🧮</span>
+                        <!-- Ícono cambiado a ⚖️ para diferenciar de otros 🧮 -->
+                        <span class="card-icono">⚖️</span>
                         <span class="card-titulo">Sistema 2x2</span>
                     </button>
                     <button class="card-modulo" data-opcion="interpolacion" onclick="seleccionar('interpolacion')">
@@ -73,7 +78,8 @@
                         <span class="card-titulo">Graficador</span>
                     </button>
                     <button class="card-modulo" data-opcion="practica" onclick="seleccionar('practica')">
-                        <span class="card-icono">🎯</span>
+                        <!-- Ícono cambiado a 🏆; 🎯 queda solo en Límites -->
+                        <span class="card-icono">🏆</span>
                         <span class="card-titulo">Practicar</span>
                     </button>
                 </div>
@@ -89,7 +95,8 @@
             <div id="historial-container" style="margin-top: 20px; text-align: left;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>📜 Historial reciente</h3>
-                    <button onclick="borrarHistorial()" style="padding: 5px 10px; font-size: 12px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer;">Limpiar</button>
+                    <!-- Botón Limpiar: más chico y discreto (fondo rojo suave) -->
+                    <button onclick="borrarHistorial()" style="padding: 6px 12px; font-size: 13px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Limpiar</button>
                 </div>
                 <ul id="lista-historial" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
             </div>
