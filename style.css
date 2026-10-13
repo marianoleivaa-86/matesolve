@@ -430,42 +430,103 @@ git diff
 .aviso-deslizamiento { display: none; }
 
 @media (max-width: 768px) {
+    /* El contenido mantiene el formato lateral y ocupa toda la pantalla. */
     body {
         min-height: 100vh;
         min-height: 100dvh;
         padding: 0;
     }
-
     .contenedor {
+        flex-direction: row;
         min-height: 100vh;
         min-height: 100dvh;
+        padding: 6px;
+        gap: 6px;
     }
 
-    .sidebar::after {
-        content: '';
-        position: absolute;
-        top: 85px;
-        right: 0;
-        bottom: 10px;
-        width: 34px;
-        background: linear-gradient(to right, rgba(255,255,255,0), var(--glass-bg));
-        pointer-events: none;
-    }
-
-    .aviso-deslizamiento {
-        display: block;
-        margin: 0 0 4px;
-        color: var(--text-muted);
-        font-size: 12px;
-        text-align: right;
-    }
-
-    .pizarron {
-        flex: 1 1 auto;
-        min-height: 0;
+    /* Barra lateral angosta, fija durante el scroll vertical de la página. */
+    .sidebar {
+        flex: 0 0 84px;
+        width: 84px;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
         overflow-x: hidden;
+        padding: 6px 3px;
+        margin: 0;
+        border-radius: 10px;
+    }
+    .sidebar::after,
+    .aviso-deslizamiento {
+        display: none;
+    }
+    .sidebar h1 {
+        overflow: hidden;
+        font-size: 0;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .sidebar h1::before {
+        content: '🧮';
+        font-size: 26px;
+    }
+    .sidebar .subtitulo {
+        display: none;
     }
 
+    /* Categorías y menú se apilan para eliminar el scroll horizontal. */
+    .menu {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+        white-space: normal;
+        gap: 8px;
+    }
+    .menu-categoria {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+    .menu-categoria h3 {
+        font-size: 10px;
+        line-height: 1.1;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+    .card-modulo {
+        width: 100%;
+        min-height: 44px;
+        padding: 5px 2px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        text-align: center;
+    }
+    .card-icono {
+        font-size: 18px;
+    }
+    .card-titulo {
+        font-size: 11px;
+        line-height: 1.1;
+        overflow-wrap: anywhere;
+    }
+
+    /* El pizarrón ocupa todo el espacio restante y usa el scroll de la página. */
+    .pizarron {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 0;
+        padding: 10px;
+        overflow: visible;
+        max-height: none;
+    }
+
+    /* Campos y botones conservan el tamaño táctil y no desbordan el pizarrón. */
     input,
     select,
     button {
@@ -478,15 +539,16 @@ git diff
     select {
         width: 100%;
     }
-
     #resultado [style*="display:flex"] {
         min-width: 0;
+        flex-wrap: wrap;
     }
     #resultado [style*="display:flex"] > input {
-        flex: 1 1 0;
+        flex: 1 1 90px;
         min-width: 0;
     }
 
+    /* Tablas y gráficos se mantienen dentro del ancho disponible. */
     table,
     #resultado table,
     canvas {
@@ -498,16 +560,5 @@ git diff
     }
     canvas {
         height: auto !important;
-    }
-
-    .bubble,
-    .formula-bubble {
-        max-width: 100%;
-        min-width: 0;
-        font-size: 16px;
-        overflow-wrap: anywhere;
-    }
-    .message-row {
-        min-width: 0;
     }
 }
